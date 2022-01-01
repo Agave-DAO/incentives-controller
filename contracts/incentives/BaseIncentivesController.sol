@@ -26,7 +26,7 @@ contract BaseIncentivesController is
 
   uint256 public constant REVISION = 3;
 
-  address public immutable override REWARD_TOKEN;
+  address public override REWARD_TOKEN;
   address internal _rewardsVault;
 
   mapping(address => uint256) internal _usersUnclaimedRewards;
@@ -36,6 +36,7 @@ contract BaseIncentivesController is
   mapping(address => address) internal _authorizedClaimers;
 
   event RewardsVaultUpdated(address indexed vault);
+  event RewardTokenUpdated(address indexed token);
 
   modifier onlyAuthorizedClaimers(address claimer, address user) {
     require(_authorizedClaimers[user] == claimer, 'CLAIMER_UNAUTHORIZED');
@@ -181,6 +182,15 @@ contract BaseIncentivesController is
   function setRewardsVault(address rewardsVault) external onlyEmissionManager {
     _rewardsVault = rewardsVault;
     emit RewardsVaultUpdated(rewardsVault);
+  }
+
+  /**
+   * @dev update the rewards token address, only allowed by the EmissionManager
+   * @param rewardToken The address of the new rewards token
+   **/
+  function setRewardToken(address rewardToken) external onlyEmissionManager {
+    REWARD_TOKEN = rewardToken;
+    emit RewardTokenUpdated(rewardToken);
   }
 
   /**
