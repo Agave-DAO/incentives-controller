@@ -37,7 +37,7 @@ interface IAaveIncentivesController is IAaveDistributionManager {
    * @param assets The assets to incentivize
    * @param emissionsPerSecond The emission for each asset
    */
-  function configureAssets(address[] calldata assets, uint256[] calldata emissionsPerSecond)
+  function configureAssets(address[] calldata assets,uint8[] calldata assetDecimals, uint256[] calldata emissionsPerSecond)
     external;
 
 

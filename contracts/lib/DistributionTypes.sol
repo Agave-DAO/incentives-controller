@@ -7,6 +7,7 @@ library DistributionTypes {
     uint104 emissionPerSecond;
     uint256 totalStaked;
     address underlyingAsset;
+    uint8 decimals;
   }
 
   struct UserStakeInput {

@@ -18,6 +18,7 @@ contract DistributionManager is IAaveDistributionManager {
     uint104 emissionPerSecond;
     uint104 index;
     uint40 lastUpdateTimestamp;
+    uint8 decimals;
     mapping(address => uint256) users;
   }
 
@@ -60,8 +61,8 @@ contract DistributionManager is IAaveDistributionManager {
   }
 
   /// @inheritdoc IAaveDistributionManager
-  function getAssetData(address asset) public view override returns (uint256, uint256, uint256) {
-    return (assets[asset].index, assets[asset].emissionPerSecond, assets[asset].lastUpdateTimestamp);
+  function getAssetData(address asset) public view override returns (uint256, uint256, uint8, uint256) {
+    return (assets[asset].index, assets[asset].emissionPerSecond, assets[asset].decimals, assets[asset].lastUpdateTimestamp);
   }
 
   /**
@@ -84,6 +85,7 @@ contract DistributionManager is IAaveDistributionManager {
 
       emit AssetConfigUpdated(
         assetsConfigInput[i].underlyingAsset,
+        assetsConfigInput[i].decimals,
         assetsConfigInput[i].emissionPerSecond
       );
     }
@@ -103,6 +105,7 @@ contract DistributionManager is IAaveDistributionManager {
   ) internal returns (uint256) {
     uint256 oldIndex = assetConfig.index;
     uint256 emissionPerSecond = assetConfig.emissionPerSecond;
+    uint8 assetDecimals = assetConfig.decimals;
     uint128 lastUpdateTimestamp = assetConfig.lastUpdateTimestamp;
 
     if (block.timestamp == lastUpdateTimestamp) {
@@ -110,7 +113,7 @@ contract DistributionManager is IAaveDistributionManager {
     }
 
     uint256 newIndex =
-      _getAssetIndex(oldIndex, emissionPerSecond, lastUpdateTimestamp, totalStaked);
+      _getAssetIndex(oldIndex, emissionPerSecond, assetDecimals, lastUpdateTimestamp, totalStaked);
 
     if (newIndex != oldIndex) {
       require(uint104(newIndex) == newIndex, 'Index overflow');
@@ -202,8 +205,9 @@ contract DistributionManager is IAaveDistributionManager {
         _getAssetIndex(
           assetConfig.index,
           assetConfig.emissionPerSecond,
+          assetConfig.decimals,
           assetConfig.lastUpdateTimestamp,
-          stakes[i].totalStaked
+          stakes[i].totalStaked          
         );
 
       accruedRewards = accruedRewards.add(
@@ -239,6 +243,7 @@ contract DistributionManager is IAaveDistributionManager {
   function _getAssetIndex(
     uint256 currentIndex,
     uint256 emissionPerSecond,
+    uint8  assetDecimals,
     uint128 lastUpdateTimestamp,
     uint256 totalBalance
   ) internal view returns (uint256) {
@@ -256,7 +261,7 @@ contract DistributionManager is IAaveDistributionManager {
       block.timestamp > distributionEnd ? distributionEnd : block.timestamp;
     uint256 timeDelta = currentTimestamp.sub(lastUpdateTimestamp);
     return
-      emissionPerSecond.mul(timeDelta).mul(10**uint256(PRECISION)).div(totalBalance).add(
+      emissionPerSecond.mul(timeDelta).mul(10**uint256(assetDecimals)).div(totalBalance).add(
         currentIndex
       );
   }
