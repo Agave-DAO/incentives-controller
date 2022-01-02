@@ -23,6 +23,7 @@ contract DistributionManager is IAaveDistributionManager {
   }
 
   address public immutable EMISSION_MANAGER;
+  address public BULK_CLAIMER;
 
   uint8 public constant PRECISION = 18;
 
@@ -35,6 +36,11 @@ contract DistributionManager is IAaveDistributionManager {
     _;
   }
 
+  modifier onlyBulkClaimer() {
+    require(msg.sender == BULK_CLAIMER, 'ONLY_BULK_CLAIMER');
+    _;
+  }
+
   constructor(address emissionManager) {
     EMISSION_MANAGER = emissionManager;
   }
@@ -43,6 +49,12 @@ contract DistributionManager is IAaveDistributionManager {
   function setDistributionEnd(uint256 distributionEnd) external override onlyEmissionManager {
     _distributionEnd = distributionEnd;
     emit DistributionEndUpdated(distributionEnd);
+  }
+
+  /// @inheritdoc IAaveDistributionManager
+  function setBulkClaimer(address bulkClaimer) external override onlyEmissionManager {
+    BULK_CLAIMER = bulkClaimer;
+    emit BulkClaimerUpdated(bulkClaimer);
   }
 
   /// @inheritdoc IAaveDistributionManager
@@ -61,8 +73,23 @@ contract DistributionManager is IAaveDistributionManager {
   }
 
   /// @inheritdoc IAaveDistributionManager
-  function getAssetData(address asset) public view override returns (uint256, uint256, uint8, uint256) {
-    return (assets[asset].index, assets[asset].emissionPerSecond, assets[asset].decimals, assets[asset].lastUpdateTimestamp);
+  function getAssetData(address asset)
+    public
+    view
+    override
+    returns (
+      uint256,
+      uint256,
+      uint8,
+      uint256
+    )
+  {
+    return (
+      assets[asset].index,
+      assets[asset].emissionPerSecond,
+      assets[asset].decimals,
+      assets[asset].lastUpdateTimestamp
+    );
   }
 
   /**
@@ -207,7 +234,7 @@ contract DistributionManager is IAaveDistributionManager {
           assetConfig.emissionPerSecond,
           assetConfig.decimals,
           assetConfig.lastUpdateTimestamp,
-          stakes[i].totalStaked          
+          stakes[i].totalStaked
         );
 
       accruedRewards = accruedRewards.add(
@@ -243,7 +270,7 @@ contract DistributionManager is IAaveDistributionManager {
   function _getAssetIndex(
     uint256 currentIndex,
     uint256 emissionPerSecond,
-    uint8  assetDecimals,
+    uint8 assetDecimals,
     uint128 lastUpdateTimestamp,
     uint256 totalBalance
   ) internal view returns (uint256) {
