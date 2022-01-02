@@ -9,13 +9,19 @@ interface IAaveDistributionManager {
   event AssetIndexUpdated(address indexed asset, uint256 index);
   event UserIndexUpdated(address indexed user, address indexed asset, uint256 index);
   event DistributionEndUpdated(uint256 newDistributionEnd);
-  event BulkClaimerUpdated(uint256 newBulkClaimer);
+  event BulkClaimerUpdated(address newBulkClaimer);
 
   /**
    * @dev Sets the end date for the distribution
    * @param distributionEnd The end date timestamp
    **/
   function setDistributionEnd(uint256 distributionEnd) external;
+
+/**
+   * @dev Sets the bulk claimer address
+   * @param bulkClaimer The bulkClaimer address
+   **/
+  function setBulkClaimer(address bulkClaimer) external;
 
   /**
    * @dev Gets the end date for the distribution

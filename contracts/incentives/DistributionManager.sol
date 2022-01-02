@@ -109,6 +109,7 @@ contract DistributionManager is IAaveDistributionManager {
       );
 
       assetConfig.emissionPerSecond = assetsConfigInput[i].emissionPerSecond;
+      assetConfig.decimals = assetsConfigInput[i].decimals;
 
       emit AssetConfigUpdated(
         assetsConfigInput[i].underlyingAsset,

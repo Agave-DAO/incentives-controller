@@ -24,7 +24,7 @@ contract BaseIncentivesController is
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
-  uint256 public constant REVISION = 3;
+  uint256 public constant REVISION = 4;
 
   address public override REWARD_TOKEN;
   address internal _rewardsVault;
@@ -57,8 +57,8 @@ contract BaseIncentivesController is
 
   function configureAssets(
     address[] calldata assets,
-    uint8[] calldata assetDecimals,
-    uint256[] calldata emissionsPerSecond
+    uint256[] calldata emissionsPerSecond,
+    uint256[] calldata assetDecimals
   ) external override onlyEmissionManager {
     require(assets.length == emissionsPerSecond.length, 'INVALID_CONFIGURATION');
 
@@ -68,7 +68,7 @@ contract BaseIncentivesController is
     for (uint256 i = 0; i < assets.length; i++) {
       assetsConfig[i].underlyingAsset = assets[i];
       assetsConfig[i].emissionPerSecond = uint104(emissionsPerSecond[i]);
-      assetsConfig[i].decimals = assetDecimals[i];
+      assetsConfig[i].decimals = uint8(assetDecimals[i]);
 
       require(assetsConfig[i].emissionPerSecond == emissionsPerSecond[i], 'INVALID_CONFIGURATION');
 
@@ -131,14 +131,14 @@ contract BaseIncentivesController is
     require(to != address(0), 'INVALID_TO_ADDRESS');
     return _claimRewards(assets, amount, msg.sender, user, to);
   }
-
+  
   /// @inheritdoc IAaveIncentivesController
   function bulkClaimRewardsOnBehalf(
     address[] calldata assets,
     uint256 amount,
     address user,
     address to
-  ) external override onlyBulkClaimer returns (uint256) {
+  ) external onlyBulkClaimer override returns (uint256) {
     require(user != address(0), 'INVALID_USER_ADDRESS');
     require(to != address(0), 'INVALID_TO_ADDRESS');
     return _claimRewards(assets, amount, msg.sender, user, to);
