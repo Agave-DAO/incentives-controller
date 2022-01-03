@@ -24,7 +24,7 @@ contract BaseIncentivesController is
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
-  uint256 public constant REVISION = 4;
+  uint256 public constant REVISION = 5;
 
   address public override REWARD_TOKEN;
   address internal _rewardsVault;

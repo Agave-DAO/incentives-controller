@@ -178,7 +178,7 @@ contract DistributionManager is IAaveDistributionManager {
 
     if (userIndex != newIndex) {
       if (stakedByUser != 0) {
-        accruedRewards = _getRewards(stakedByUser, newIndex, userIndex);
+        accruedRewards = _getRewards(stakedByUser, newIndex, userIndex, assetData.decimals);
       }
 
       assetData.users[user] = newIndex;
@@ -239,7 +239,12 @@ contract DistributionManager is IAaveDistributionManager {
         );
 
       accruedRewards = accruedRewards.add(
-        _getRewards(stakes[i].stakedByUser, assetIndex, assetConfig.users[user])
+        _getRewards(
+          stakes[i].stakedByUser,
+          assetIndex,
+          assetConfig.users[user],
+          assetConfig.decimals
+        )
       );
     }
     return accruedRewards;
@@ -255,9 +260,10 @@ contract DistributionManager is IAaveDistributionManager {
   function _getRewards(
     uint256 principalUserBalance,
     uint256 reserveIndex,
-    uint256 userIndex
+    uint256 userIndex,
+    uint8 assetDecimals
   ) internal pure returns (uint256) {
-    return principalUserBalance.mul(reserveIndex.sub(userIndex)) / 10**uint256(PRECISION);
+    return principalUserBalance.mul(reserveIndex.sub(userIndex)) / 10**uint256(assetDecimals);
   }
 
   /**
