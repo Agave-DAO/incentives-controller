@@ -55,6 +55,7 @@ interface IAaveDistributionManager {
       uint256,
       uint256,
       uint8,
-      uint256
+      uint256,
+      bool
     );
 }

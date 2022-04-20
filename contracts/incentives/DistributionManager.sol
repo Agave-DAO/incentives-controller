@@ -19,6 +19,7 @@ contract DistributionManager is IAaveDistributionManager {
     uint104 index;
     uint40 lastUpdateTimestamp;
     uint8 decimals;
+    bool disabled;
     mapping(address => uint256) users;
   }
 
@@ -81,15 +82,28 @@ contract DistributionManager is IAaveDistributionManager {
       uint256,
       uint256,
       uint8,
-      uint256
+      uint256,
+      bool
     )
   {
     return (
       assets[asset].index,
       assets[asset].emissionPerSecond,
       assets[asset].decimals,
-      assets[asset].lastUpdateTimestamp
+      assets[asset].lastUpdateTimestamp,
+      assets[asset].disabled
     );
+  }
+
+  /**
+   * @dev Configure the assets for a specific emission
+   * @param assetsConfigInput The array of each asset configuration
+   **/
+  function _disableAssets(DistributionTypes.AssetConfigInput[] memory assetsConfigInput) internal {
+    for (uint256 i = 0; i < assetsConfigInput.length; i++) {
+      AssetData storage assetConfig = assets[assetsConfigInput[i].underlyingAsset];
+      assetConfig.disabled = assetsConfigInput[i].disabled;
+    }
   }
 
   /**
@@ -173,18 +187,18 @@ contract DistributionManager is IAaveDistributionManager {
     AssetData storage assetData = assets[asset];
     uint256 userIndex = assetData.users[user];
     uint256 accruedRewards = 0;
+    if (!assetData.disabled) {
+      uint256 newIndex = _updateAssetStateInternal(asset, assetData, totalStaked);
 
-    uint256 newIndex = _updateAssetStateInternal(asset, assetData, totalStaked);
+      if (userIndex != newIndex) {
+        if (stakedByUser != 0) {
+          accruedRewards = _getRewards(stakedByUser, newIndex, userIndex, assetData.decimals);
+        }
 
-    if (userIndex != newIndex) {
-      if (stakedByUser != 0) {
-        accruedRewards = _getRewards(stakedByUser, newIndex, userIndex, assetData.decimals);
+        assetData.users[user] = newIndex;
+        emit UserIndexUpdated(user, asset, newIndex);
       }
-
-      assetData.users[user] = newIndex;
-      emit UserIndexUpdated(user, asset, newIndex);
     }
-
     return accruedRewards;
   }
 
@@ -237,15 +251,18 @@ contract DistributionManager is IAaveDistributionManager {
           assetConfig.lastUpdateTimestamp,
           stakes[i].totalStaked
         );
-
-      accruedRewards = accruedRewards.add(
-        _getRewards(
-          stakes[i].stakedByUser,
-          assetIndex,
-          assetConfig.users[user],
-          assetConfig.decimals
-        )
-      );
+      if (assetConfig.disabled) {
+        accruedRewards = 0;
+      } else {
+        accruedRewards = accruedRewards.add(
+          _getRewards(
+            stakes[i].stakedByUser,
+            assetIndex,
+            assetConfig.users[user],
+            assetConfig.decimals
+          )
+        );
+      }
     }
     return accruedRewards;
   }

@@ -8,6 +8,7 @@ library DistributionTypes {
     uint256 totalStaked;
     address underlyingAsset;
     uint8 decimals;
+    bool disabled;
   }
 
   struct UserStakeInput {

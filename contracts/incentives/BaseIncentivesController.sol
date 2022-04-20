@@ -24,16 +24,18 @@ contract BaseIncentivesController is
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
-  uint256 public constant REVISION = 5;
+  uint256 public constant REVISION = 6;
 
   address public override REWARD_TOKEN;
   address internal _rewardsVault;
 
-  mapping(address => uint256) internal _usersUnclaimedRewards;
+  mapping(address => uint256) internal _old_var;
 
   // this mapping allows whitelisted addresses to claim on behalf of others
   // useful for contracts that hold tokens to be rewarded but don't have any native logic to claim Liquidity Mining rewards
   mapping(address => address) internal _authorizedClaimers;
+
+  mapping(address => uint256) internal _usersUnclaimedRewards;
 
   event RewardsVaultUpdated(address indexed vault);
   event RewardTokenUpdated(address indexed token);
@@ -75,6 +77,16 @@ contract BaseIncentivesController is
       assetsConfig[i].totalStaked = IScaledBalanceToken(assets[i]).scaledTotalSupply();
     }
     _configureAssets(assetsConfig);
+  }
+
+  function disableAssets(address[] calldata assets) external onlyEmissionManager {
+    DistributionTypes.AssetConfigInput[] memory assetsConfig =
+      new DistributionTypes.AssetConfigInput[](assets.length);
+    for (uint256 i = 0; i < assets.length; i++) {
+      assetsConfig[i].underlyingAsset = assets[i];
+      assetsConfig[i].disabled = true;
+    }
+    _disableAssets(assetsConfig);
   }
 
   /// @inheritdoc IAaveIncentivesController
@@ -131,14 +143,14 @@ contract BaseIncentivesController is
     require(to != address(0), 'INVALID_TO_ADDRESS');
     return _claimRewards(assets, amount, msg.sender, user, to);
   }
-  
+
   /// @inheritdoc IAaveIncentivesController
   function bulkClaimRewardsOnBehalf(
     address[] calldata assets,
     uint256 amount,
     address user,
     address to
-  ) external onlyBulkClaimer override returns (uint256) {
+  ) external override onlyBulkClaimer returns (uint256) {
     require(user != address(0), 'INVALID_USER_ADDRESS');
     require(to != address(0), 'INVALID_TO_ADDRESS');
     return _claimRewards(assets, amount, msg.sender, user, to);
