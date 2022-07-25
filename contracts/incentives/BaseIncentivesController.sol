@@ -24,12 +24,13 @@ contract BaseIncentivesController is
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
-  uint256 public constant REVISION = 6;
+  uint256 public constant REVISION = 7;
 
   address public override REWARD_TOKEN;
   address internal _rewardsVault;
 
-  mapping(address => uint256) internal _old_var;
+  uint256 public newRewardTokenAdjustmentAmount = 1000;
+  bool public newRewardTokenAdjustmentMultiplier = false ;
 
   // this mapping allows whitelisted addresses to claim on behalf of others
   // useful for contracts that hold tokens to be rewarded but don't have any native logic to claim Liquidity Mining rewards
@@ -119,7 +120,16 @@ contract BaseIncentivesController is
         .getScaledUserBalanceAndSupply(user);
     }
     unclaimedRewards = unclaimedRewards.add(_getUnclaimedRewards(user, userState));
-    return unclaimedRewards;
+    // Divided by 1000 to adjust to new reward Token -> Requires maintaining the inflated reward distribution. 
+    // Cleaner than forcing a bulkClaim for every user due to external smart contract integrations. 
+    if (newRewardTokenAdjustmentMultiplier)
+      {
+      return unclaimedRewards.mul(newRewardTokenAdjustmentAmount); 
+      }
+    else
+      {
+      return unclaimedRewards.div(newRewardTokenAdjustmentAmount); 
+      }
   }
 
   /// @inheritdoc IAaveIncentivesController
@@ -169,7 +179,14 @@ contract BaseIncentivesController is
 
   /// @inheritdoc IAaveIncentivesController
   function getUserUnclaimedRewards(address _user) external view override returns (uint256) {
-    return _usersUnclaimedRewards[_user];
+      if (newRewardTokenAdjustmentMultiplier)
+      {
+        return _usersUnclaimedRewards[_user].mul(newRewardTokenAdjustmentAmount); 
+      }
+    else
+      {
+        return _usersUnclaimedRewards[_user].div(newRewardTokenAdjustmentAmount); 
+      }
   }
 
   /**
@@ -241,8 +258,16 @@ contract BaseIncentivesController is
     if (unclaimedRewards == 0) {
       return 0;
     }
+    if (newRewardTokenAdjustmentMultiplier)
+      {
+      unclaimedRewards =  unclaimedRewards.mul(newRewardTokenAdjustmentAmount); 
+      }
+    else
+      {
+      unclaimedRewards =  unclaimedRewards.div(newRewardTokenAdjustmentAmount); 
+      }
 
-    uint256 amountToClaim = amount > unclaimedRewards ? unclaimedRewards : amount;
+    uint256 amountToClaim = (amount > unclaimedRewards) ? unclaimedRewards : amount;
     _usersUnclaimedRewards[user] = unclaimedRewards - amountToClaim; // Safe due to the previous line
 
     IERC20(REWARD_TOKEN).safeTransferFrom(_rewardsVault, to, amountToClaim);
