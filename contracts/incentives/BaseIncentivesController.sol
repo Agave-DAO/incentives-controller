@@ -29,14 +29,16 @@ contract BaseIncentivesController is
   address public override REWARD_TOKEN;
   address internal _rewardsVault;
 
-  uint256 public newRewardTokenAdjustmentAmount = 1000;
-  bool public newRewardTokenAdjustmentMultiplier = false;
+  mapping(address => uint256) internal _old_var;
 
   // this mapping allows whitelisted addresses to claim on behalf of others
   // useful for contracts that hold tokens to be rewarded but don't have any native logic to claim Liquidity Mining rewards
   mapping(address => address) internal _authorizedClaimers;
 
   mapping(address => uint256) internal _usersUnclaimedRewards;
+
+  uint256 public newRewardTokenAdjustmentAmount = 1000;
+  bool public newRewardTokenAdjustmentMultiplier = false;
 
   event RewardsVaultUpdated(address indexed vault);
   event RewardTokenUpdated(address indexed token);
@@ -227,7 +229,7 @@ contract BaseIncentivesController is
    * @param RewardTokenAdjustmentMultiplier If the adjustment is a multiple or a division of the reference point.
    * @param RewardTokenAdjustmentAmount The amount of the multiple or a division relative to the reference point. (symm v1 pool)
    **/
-  function setRewardTokenAdjustment( bool RewardTokenAdjustmentMultiplier, uint256 RewardTokenAdjustmentAmount) external onlyEmissionManager {
+  function setRewardTokenAdjustment( bool RewardTokenAdjustmentMultiplier, uint256 RewardTokenAdjustmentAmount) external onlyProxyAdmin {
     newRewardTokenAdjustmentMultiplier = RewardTokenAdjustmentMultiplier;
     newRewardTokenAdjustmentAmount = RewardTokenAdjustmentAmount;
   }

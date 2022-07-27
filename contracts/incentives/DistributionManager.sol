@@ -32,6 +32,8 @@ contract DistributionManager is IAaveDistributionManager {
 
   uint256 internal _distributionEnd;
 
+  address public immutable PROXY_ADMIN = 0x70225281599Ba586039E7BD52736681DFf6c2Fc4;
+
   modifier onlyEmissionManager() {
     require(msg.sender == EMISSION_MANAGER, 'ONLY_EMISSION_MANAGER');
     _;
@@ -39,6 +41,11 @@ contract DistributionManager is IAaveDistributionManager {
 
   modifier onlyBulkClaimer() {
     require(msg.sender == BULK_CLAIMER, 'ONLY_BULK_CLAIMER');
+    _;
+  }
+
+  modifier onlyProxyAdmin() {
+    require(msg.sender == PROXY_ADMIN, 'ONLY_PROXY_ADMIN');
     _;
   }
 
